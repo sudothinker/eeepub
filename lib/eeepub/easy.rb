@@ -28,15 +28,17 @@ module EeePub
   #   HTML
   #   
   #   epub.assets << 'image.png'
+  #   epub.urls << ["http://path/to/image.png", "image.png"]
   #   
   #   epub.save('sample.epub')
   class Easy < EeePub::Maker
-    attr_reader :sections, :assets
+    attr_reader :sections, :assets, :urls
 
     # @param [Proc] block the block for initialize
     def initialize(&block)
       @sections = []
       @assets = []
+      @urls = []
       super
     end
 
@@ -88,8 +90,14 @@ module EeePub
       assets.each do |file|
         FileUtils.cp(file, dir)
       end
+      
+      urls.each do |url|
+        File.open(File.join(dir, url[1]), "w") do |f|
+          f << open(url[0]).read
+        end
+      end
 
-      files(filenames + assets)
+      files(filenames + assets + urls.map{ |u| u[1] })
       nav(
         [sections, filenames].transpose.map do |section, filename|
           {:label => section[0], :content => File.basename(filename)}
